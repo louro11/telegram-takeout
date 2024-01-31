@@ -27,7 +27,7 @@ async def download_media(message, folder_path):
     return media_name
 
 
-async def save_messages_to_html(chat_limit=5, message_limit=10):
+async def save_all_messages_to_html(chat_limit=10, message_limit=20):
     await client.connect()
     if not await client.is_user_authorized():
         await client.send_code_request(phone_number)
@@ -54,7 +54,7 @@ async def save_messages_to_html(chat_limit=5, message_limit=10):
 
             for message in messages:
                 media_name = await download_media(message, export_dir)
-                html_file.write(f'<li><b>{html.escape(chat_title) + " (" + html.escape(str(message.sender_id)) + ") [" + html.escape(str(message.date)) +"]"}</b>: {html.escape(message.text)}</li>')
+                html_file.write(f'<li><b>{html.escape(chat_title) + " (" + html.escape(str(message.sender_id)) + ") [" + html.escape(str(message.date)) +"]"}</b>: {message.text}</li>')
                 if media_name:
                     html_file.write(f'<br><i>{html.escape(media_name)}</i>')
                 html_file.write('</li>')
@@ -65,8 +65,47 @@ async def save_messages_to_html(chat_limit=5, message_limit=10):
 
 
 
+async def save_chat_messages_to_html(chat_id):
+    await client.connect()
+    if not await client.is_user_authorized():
+        await client.send_code_request(phone_number)
+        await client.sign_in(phone_number, input('Enter the code: '))
+
+
+    chat_entity = chat_id
+    chat_title = chat_id
+     
+    # Use username if available, otherwise fallback to the title
+    #chat_title = chat_entity.username# or str(chat_entity.title)
+
+
+    # Retrieve messages from the chat
+    messages = await client.get_messages(chat_id)
+
+    # Save messages to an HTML file for each chat
+    filename = f'{chat_title.replace(" ", "_").lower()}_conversation.html'
+
+    with open(os.path.join(export_dir, filename), 'w', encoding='utf-8') as html_file:
+        html_file.write(f'<html><head><title>{chat_title} Conversations</title></head><body><ul>')
+
+        for message in messages:
+            media_name = await download_media(message, export_dir)
+            html_file.write(f'<li><b>{html.escape(chat_title) + " (" + html.escape(str(message.sender_id)) + ") [" + html.escape(str(message.date)) +"]"}</b>: {message.text}</li>')
+            if media_name:
+                html_file.write(f'<br><i>{html.escape(media_name)}</i>')
+            html_file.write('</li>')
+
+        html_file.write('</ul></body></html>')
+
+    await client.disconnect()
+
 if __name__ == "__main__":
-    #read config file
+
+    #Ask the user if he wants to export ALL chats or just a particular one
+    print("Telegram chat takeout, please type the number (the order) of the chat you would like to export. Type ALL to export all chats (it may take a while))")
+    chat_id = input("Chat name: ")
+
+    #Read config file
     with open("config.txt", "r", encoding="utf-8") as config:
         line = config.readline()
         values = line.split('"')
@@ -83,4 +122,7 @@ if __name__ == "__main__":
     client = TelegramClient('session_name', api_id, api_hash)
     export_dir = os.path.join(os.getcwd(), datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
     os.makedirs(export_dir)
-    asyncio.run(save_messages_to_html(chat_limit=20, message_limit=20))    
+    if chat_id == 'ALL':
+        asyncio.run(save_all_messages_to_html(chat_limit=10, message_limit=20))
+    else:
+        asyncio.run(save_chat_messages_to_html(chat_id))    
