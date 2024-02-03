@@ -49,11 +49,14 @@ async def save_all_messages_to_html(chat_limit=10, message_limit=20):
         # Save messages to an HTML file for each chat
         filename = f'{chat_title.replace(" ", "_").lower()}_conversation.html'
 
-        with open(os.path.join(export_dir, filename), 'w', encoding='utf-8') as html_file:
+        chat_dir = os.path.join(export_dir, chat_title)
+        os.makedirs(chat_dir)
+
+        with open(os.path.join(chat_dir, filename), 'w', encoding='utf-8') as html_file:
             html_file.write(f'<html><head><title>{chat_title} Conversations</title></head><body><ul>')
 
             for message in messages:
-                media_name = await download_media(message, export_dir)
+                media_name = await download_media(message, chat_dir)
                 html_file.write(f'<li><b>{html.escape(chat_title) + " (" + html.escape(str(message.sender_id)) + ") [" + html.escape(str(message.date)) +"]"}</b>: {message.text}</li>')
                 if media_name:
                     html_file.write(f'<br><i>{html.escape(media_name)}</i>')
@@ -65,7 +68,7 @@ async def save_all_messages_to_html(chat_limit=10, message_limit=20):
 
 
 
-async def save_chat_messages_to_html(chat_id):
+async def save_chat_messages_to_html(chat_id, message_limit=999):
     await client.connect()
     if not await client.is_user_authorized():
         await client.send_code_request(phone_number)
@@ -80,12 +83,13 @@ async def save_chat_messages_to_html(chat_id):
 
 
     # Retrieve messages from the chat
-    messages = await client.get_messages(chat_id)
+    messages = await client.get_messages(chat_id, limit=message_limit)
 
     # Save messages to an HTML file for each chat
     filename = f'{chat_title.replace(" ", "_").lower()}_conversation.html'
 
     with open(os.path.join(export_dir, filename), 'w', encoding='utf-8') as html_file:
+
         html_file.write(f'<html><head><title>{chat_title} Conversations</title></head><body><ul>')
 
         for message in messages:
@@ -105,19 +109,31 @@ if __name__ == "__main__":
     print("Telegram chat takeout, please type the number (the order) of the chat you would like to export. Type ALL to export all chats (it may take a while))")
     chat_id = input("Chat name: ")
 
-    #Read config file
-    with open("config.txt", "r", encoding="utf-8") as config:
+    #Read config file or create if it does not exist
+    with open("config.txt", "w+", encoding="utf-8") as config:
+
         line = config.readline()
+        print(line)
+        #if line == "":
+        #    api_id=input("Api ID not found, please insert the api ID for the account to export: ")
+        #    config.write("api_id = \"" + api_id + "\"\n")
+        #    api_hash=input("Api Hash not found, please insert the api hash for the account to export: ")
+        #    config.write("api_hash = \"" + api_hash +"\"\n")
+        #    phone_number=input("Phone number not found, please insert the phone number for the account to export: ")
+        #    config.write("phone_number = \"" + phone_number +"\"\n")
+
+        #else:
         values = line.split('"')
         api_id = values[1]
 
         line = config.readline()
         values = line.split('"')
         api_hash = values[1]
-
+            
         line = config.readline()
         values = line.split('"')
         phone_number = values[1]
+            
 
     client = TelegramClient('session_name', api_id, api_hash)
     export_dir = os.path.join(os.getcwd(), datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
