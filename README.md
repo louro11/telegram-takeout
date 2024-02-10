@@ -5,6 +5,8 @@ A simple python script that extracts telegram chats
 
 Still in development...
 
+## Instructions
+Make sure you have a config.txt file with the Telegram API credentials
 
 ## How it works
 The script uses the [Telethon](https://github.com/LonamiWebs/Telethon) Telegram API client to parse all chats and messages and storing them in separate HTML files.

@@ -109,20 +109,10 @@ if __name__ == "__main__":
     print("Telegram chat takeout, please type the number (the order) of the chat you would like to export. Type ALL to export all chats (it may take a while))")
     chat_id = input("Chat name: ")
 
-    #Read config file or create if it does not exist
+    #Read config file or create if it does not exist - Added just for testing
     with open("config.txt", "w+", encoding="utf-8") as config:
 
         line = config.readline()
-        print(line)
-        #if line == "":
-        #    api_id=input("Api ID not found, please insert the api ID for the account to export: ")
-        #    config.write("api_id = \"" + api_id + "\"\n")
-        #    api_hash=input("Api Hash not found, please insert the api hash for the account to export: ")
-        #    config.write("api_hash = \"" + api_hash +"\"\n")
-        #    phone_number=input("Phone number not found, please insert the phone number for the account to export: ")
-        #    config.write("phone_number = \"" + phone_number +"\"\n")
-
-        #else:
         values = line.split('"')
         api_id = values[1]
 
